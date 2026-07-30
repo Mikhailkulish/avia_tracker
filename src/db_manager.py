@@ -2,7 +2,6 @@ import psycopg2
 from src.config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 from src.logger_manager import log_manager
 
-# ============= ПОЛУЧАЕМ ЛОГГЕР =============
 logger = log_manager.get_logger("db_manager")
 
 
@@ -39,12 +38,7 @@ class DBManager:
             logger.info("Соединение с БД закрыто")
 
     def get_countries_and_aeroplanes_count(self) -> list:
-        """
-        Получает список всех стран и количество самолетов в их воздушных пространствах
-
-        Returns:
-            list: Список кортежей (название_страны, количество_самолетов)
-        """
+        """Получает список всех стран и количество самолетов."""
         query = """
             SELECT 
                 c.name as country,
@@ -69,12 +63,7 @@ class DBManager:
             raise
 
     def get_all_aeroplanes(self) -> list:
-        """
-        Получает список всех воздушных судов с их последними данными
-
-        Returns:
-            list: Список кортежей (icao24, callsign, origin_country, last_seen, track_count)
-        """
+        """Получает список всех воздушных судов с их последними данными."""
         query = """
             SELECT 
                 a.icao24,
@@ -102,12 +91,7 @@ class DBManager:
             raise
 
     def get_avg_speed(self) -> float:
-        """
-        Получает среднюю скорость по всем самолетам
-
-        Returns:
-            float: Средняя скорость в м/с
-        """
+        """Получает среднюю скорость по всем самолетам."""
         query = """
             SELECT 
                 AVG(velocity) as avg_speed
@@ -130,12 +114,7 @@ class DBManager:
             raise
 
     def get_aeroplanes_with_higher_speed(self) -> list:
-        """
-        Получает список всех самолетов, у которых скорость выше средней
-
-        Returns:
-            list: Список кортежей (icao24, callsign, max_speed, avg_speed)
-        """
+        """Получает список всех самолетов, у которых скорость выше средней."""
         query = """
                 WITH avg_speed_cte AS (
                     SELECT AVG(velocity) as avg_speed
@@ -169,15 +148,7 @@ class DBManager:
             raise
 
     def get_aeroplanes_with_keyword(self, keyword: str) -> list:
-        """
-        Получает список всех самолетов, в позывном которых содержатся переданные символы
-
-        Args:
-            keyword: Строка для поиска в позывном (например, 'ACA' для Air Canada)
-
-        Returns:
-            list: Список кортежей (icao24, callsign, origin_country, track_count)
-        """
+        """Получает список всех самолетов, в позывном которых содержатся переданные символы."""
         if not keyword or not isinstance(keyword, str):
             logger.warning("Передан пустой или некорректный ключевой слово")
             return []
@@ -208,31 +179,24 @@ class DBManager:
             logger.error(f"Ошибка поиска самолетов с ключевым словом '{keyword}': {e}")
             raise
 
-    # ============= ДОПОЛНИТЕЛЬНЫЕ МЕТОДЫ ДЛЯ УДОБСТВА =============
+    # Дополнительные методы
 
     def get_aeroplanes_by_country(self, country_name: str) -> list:
-        """
-        Получает список самолетов для конкретной страны
-
-        Args:
-            country_name: Название страны
-
-        Returns:
-            list: Список кортежей (icao24, callsign, altitude, latitude, longitude, timestamp)
-        """
+        """Получает список самолетов для конкретной страны."""
         query = """
             SELECT 
                 t.icao24,
-                t.callsign,
+                a.callsign,
                 t.altitude,
                 t.latitude,
                 t.longitude,
                 t.timestamp
             FROM tracks t
-            JOIN countries c ON t.country_id = c.id
-            WHERE c.name = %s
-            ORDER BY t.timestamp DESC
-            LIMIT 100
+        JOIN aircraft a ON t.aircraft_id = a.id
+        JOIN countries c ON t.country_id = c.id
+        WHERE c.name = %s
+        ORDER BY t.timestamp DESC
+        LIMIT 100
         """
 
         try:
@@ -249,12 +213,7 @@ class DBManager:
             raise
 
     def get_statistics_summary(self) -> dict:
-        """
-        Получает сводную статистику по базе данных
-
-        Returns:
-            dict: Словарь со статистикой
-        """
+        """Получает сводную статистику по базе данных."""
         query = """
             SELECT 
                 (SELECT COUNT(*) FROM countries) as total_countries,
@@ -286,7 +245,7 @@ class DBManager:
             raise
 
     def print_countries_and_aeroplanes_count(self):
-        """Выводит список стран с количеством самолетов в удобном формате"""
+        """Выводит список стран с количеством самолетов в удобном формате."""
         data = self.get_countries_and_aeroplanes_count()
 
         print("\n" + "=" * 60)
@@ -307,7 +266,7 @@ class DBManager:
         print("=" * 60 + "\n")
 
     def print_all_aeroplanes(self, limit: int = 20):
-        """Выводит список всех самолетов (первые N)"""
+        """Выводит список всех самолетов (первые N)."""
         data = self.get_all_aeroplanes()
 
         print("\n" + "=" * 80)
@@ -327,7 +286,7 @@ class DBManager:
         print("=" * 80 + "\n")
 
     def print_aeroplanes_with_keyword(self, keyword: str):
-        """Выводит список самолетов с ключевым словом в позывном"""
+        """Выводит список самолетов с ключевым словом в позывном."""
         data = self.get_aeroplanes_with_keyword(keyword)
 
         print(f"\n{'=' * 60}")
@@ -350,7 +309,7 @@ class DBManager:
         print("=" * 60 + "\n")
 
     def print_avg_speed(self):
-        """Выводит среднюю скорость"""
+        """Выводит среднюю скорость."""
         avg_speed = self.get_avg_speed()
 
         print("\n" + "=" * 60)
@@ -366,7 +325,7 @@ class DBManager:
         print("=" * 60 + "\n")
 
     def print_aeroplanes_with_higher_speed(self):
-        """Выводит список самолетов со скоростью выше средней"""
+        """Выводит список самолетов со скоростью выше средней."""
         data = self.get_aeroplanes_with_higher_speed()
 
         print("\n" + "=" * 80)
@@ -388,54 +347,3 @@ class DBManager:
 
         print(f"\nВсего: {len(data)} самолетов")
         print("=" * 80 + "\n")
-
-
-# ============= ТОЧКА ВХОДА ДЛЯ ТЕСТИРОВАНИЯ =============
-
-def main():
-    """Тестирование DBManager"""
-    print("\n" + "=" * 60)
-    print("ТЕСТИРОВАНИЕ DBManager")
-    print("=" * 60 + "\n")
-
-    # Создаем экземпляр
-    db_manager = DBManager()
-
-    try:
-        # 1. Список стран и количество самолетов
-        db_manager.print_countries_and_aeroplanes_count()
-
-        # 2. Список всех самолетов
-        db_manager.print_all_aeroplanes(limit=10)
-
-        # 3. Средняя скорость
-        db_manager.print_avg_speed()
-
-        # 4. Самолеты со скоростью выше средней
-        db_manager.print_aeroplanes_with_higher_speed()
-
-        # 5. Поиск по ключевому слову
-        keyword = input("Введите ключевое слово для поиска (например, ACA): ").strip()
-        if keyword:
-            db_manager.print_aeroplanes_with_keyword(keyword)
-
-        # 6. Сводная статистика
-        stats = db_manager.get_statistics_summary()
-        print("\n" + "=" * 60)
-        print("СВОДНАЯ СТАТИСТИКА")
-        print("=" * 60)
-        print(f"  Всего стран: {stats['total_countries']}")
-        print(f"  Всего самолетов: {stats['total_aircraft']}")
-        print(f"  Всего треков: {stats['total_tracks']}")
-        print(f"  Уникальных ICAO: {stats['unique_icao']}")
-        print(f"  Активных стран: {stats['active_countries']}")
-        print("=" * 60 + "\n")
-
-    except Exception as e:
-        print(f"Ошибка: {e}")
-    finally:
-        db_manager.close()
-
-
-if __name__ == "__main__":
-    main()
