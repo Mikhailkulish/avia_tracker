@@ -55,38 +55,40 @@ def create_db() -> None:
 
         # Таблица стран
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS countries (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(100) NOT NULL UNIQUE
-            )
-        """)
+                CREATE TABLE IF NOT EXISTS countries (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(100) NOT NULL UNIQUE
+                )
+            """)
         logger.debug("Таблица countries создана/проверена")
 
         # Таблица самолетов
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS aircraft (
-                id SERIAL PRIMARY KEY,
-                icao24 VARCHAR(6) NOT NULL UNIQUE,
-                callsign VARCHAR(10),
-                origin_country VARCHAR(100)
-            )
-        """)
+                CREATE TABLE IF NOT EXISTS aircraft (
+                    id SERIAL PRIMARY KEY,
+                    icao24 VARCHAR(6) NOT NULL UNIQUE,
+                    callsign VARCHAR(10),
+                    origin_country VARCHAR(100)
+                )
+            """)
         logger.debug("Таблица aircraft создана/проверена")
 
-        # Таблица треков
+        # Таблица треков - ДОБАВЛЕНА КОЛОНКА velocity
         cur.execute("""
             CREATE TABLE IF NOT EXISTS tracks (
                 id BIGSERIAL PRIMARY KEY,
                 aircraft_id INTEGER REFERENCES aircraft(id),
                 country_id INTEGER REFERENCES countries(id),
                 icao24 VARCHAR(6),
+                callsign VARCHAR(10),
                 altitude DECIMAL(10, 2),
+                velocity DECIMAL(10, 2),
                 latitude DECIMAL(10, 6),
                 longitude DECIMAL(10, 6),
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(icao24, country_id, timestamp)
-            )
-        """)
+                )
+            """)
         logger.debug("Таблица tracks создана/проверена")
 
         conn.close()
@@ -95,6 +97,46 @@ def create_db() -> None:
     except Exception as e:
         logger.error(f"Ошибка при создании базы данных: {e}")
         raise
+
+
+def clear_data() -> None:
+    """Очищает все данные из таблиц (удаляет записи, но сохраняет структуру)"""
+    try:
+        conn = get_connection()
+        conn.autocommit = True
+        cur = conn.cursor()
+
+        # TRUNCATE удаляет все записи, но структура таблиц сохраняется
+        cur.execute("TRUNCATE TABLE tracks CASCADE")
+        cur.execute("TRUNCATE TABLE aircraft CASCADE")
+        cur.execute("TRUNCATE TABLE countries CASCADE")
+
+        conn.close()
+        logger.info("Все данные очищены")
+        print("Данные очищены")
+
+    except Exception as e:
+        logger.error(f"Ошибка очистки данных: {e}")
+        print(f"Ошибка очистки: {e}")
+
+
+def add_country(country_name: str) -> None:
+    """Добавляет страну в БД если её нет"""
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO countries (name) VALUES (%s)
+            ON CONFLICT (name) DO NOTHING
+        """, (country_name,))
+
+        conn.commit()
+        conn.close()
+        logger.debug(f"Страна '{country_name}' добавлена/проверена")
+
+    except Exception as e:
+        logger.error(f"Ошибка добавления страны '{country_name}': {e}")
 
 
 # Работа с данными
@@ -125,17 +167,17 @@ def save_aircraft(icao24: str, callsign: str, origin_country: str) -> int:
         raise
 
 
-def save_track(aircraft_id: int, country_id: int, icao24: str, altitude: float, latitude: float, longitude: float) -> None:
+def save_track(aircraft_id: int, country_id: int, icao24: str, altitude: float, velocity: float, latitude: float, longitude: float) -> None:
     """Сохраняет трек с защитой от дублей"""
     try:
         conn = get_connection()
         cur = conn.cursor()
 
         cur.execute("""
-            INSERT INTO tracks (aircraft_id, country_id, icao24, altitude, latitude, longitude)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (icao24, country_id, timestamp) DO NOTHING
-        """, (aircraft_id, country_id, icao24, altitude, latitude, longitude))
+                INSERT INTO tracks (aircraft_id, country_id, icao24, altitude, velocity, latitude, longitude)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (icao24, country_id, timestamp) DO NOTHING
+            """, (aircraft_id, country_id, icao24, altitude, velocity, latitude, longitude))
 
         conn.commit()
         conn.close()
@@ -143,25 +185,6 @@ def save_track(aircraft_id: int, country_id: int, icao24: str, altitude: float, 
 
     except Exception as e:
         logger.error(f"Ошибка сохранения трека для {icao24}: {e}")
-
-
-def add_country(country_name: str) -> None:
-    """Добавляет страну в БД если её нет"""
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
-
-        cur.execute("""
-            INSERT INTO countries (name) VALUES (%s)
-            ON CONFLICT (name) DO NOTHING
-        """, (country_name,))
-
-        conn.commit()
-        conn.close()
-        logger.debug(f"Страна '{country_name}' добавлена/проверена")
-
-    except Exception as e:
-        logger.error(f"Ошибка добавления страны '{country_name}': {e}")
 
 
 def get_country_id(country_name: str) -> None:
@@ -294,9 +317,10 @@ def fill_country(country_name: str, processed_icaos: set = None) -> int:
                 latitude = float(state[6]) if state[6] else None
                 longitude = float(state[5]) if state[5] else None
                 altitude = float(state[7]) if state[7] else None
+                velocity = float(state[9]) if state[9] else None
 
                 aircraft_id = save_aircraft(icao24, callsign, origin_country)
-                save_track(aircraft_id, country_id, icao24, altitude, latitude, longitude)
+                save_track(aircraft_id, country_id, icao24, altitude, velocity, latitude, longitude)
 
                 processed_icaos.add(icao24)
                 saved += 1
@@ -314,7 +338,7 @@ def fill_country(country_name: str, processed_icaos: set = None) -> int:
 
 
 # Ввод пользователя
-def get_countries_from_user() -> list[]:
+def get_countries_from_user() -> list:
     """Просит пользователя ввести страны"""
     print("\n" + "=" * 60)
     print("ВВЕДИТЕ СТРАНЫ ДЛЯ СБОРА ДАННЫХ")
@@ -422,3 +446,51 @@ def fill_all_countries(countries: list) -> None:
     except Exception as e:
         logger.error(f"Критическая ошибка при сборе данных: {e}")
         raise
+
+
+def main() -> None:
+    """Главная функция для запуска заполнения базы данных"""
+    logger.info("=" * 60)
+    logger.info("ЗАПУСК ПРОГРАММЫ СБОРА ДАННЫХ")
+    logger.info("=" * 60)
+
+    try:
+        # Получаем страны от пользователя
+        countries = get_countries_from_user()
+
+        if not countries:
+            logger.warning("Страны не введены. Завершение.")
+            print("Страны не введены. Завершение.")
+            return
+
+        # Показываем что будет обработано
+        print(f"\nБудет обработано {len(countries)} стран: {', '.join(countries)}")
+        print(f"Лимит на страну: {MAX_AIRCRAFT_PER_COUNTRY} самолетов")
+
+        # Запрашиваем подтверждение
+        confirm = input("Продолжить? (y/n): ").strip().lower()
+
+        if confirm != 'y':
+            logger.info("Пользователь отменил выполнение")
+            print("Отмена.")
+            return
+
+        # Заполняем базу данных
+        fill_all_countries(countries)
+
+        print("\nГотово!")
+        logger.info("Программа завершена успешно")
+
+    except KeyboardInterrupt:
+        logger.warning("Программа прервана пользователем (Ctrl+C)")
+        print("\nПрервано пользователем")
+
+    except Exception as e:
+        logger.error(f"Неожиданная ошибка: {e}", exc_info=True)
+        print(f"\nОшибка: {e}")
+
+    finally:
+        logger.info("=" * 60)
+
+if __name__ == '__main__':
+    main()
