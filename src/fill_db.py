@@ -1,10 +1,10 @@
-import psycopg2
 import time
+
+import psycopg2
+
 from src.api_adapter import APIAdapter
-from src.config import (
-    DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT,
-    REQUEST_DELAY, MIN_COUNTRIES, MAX_AIRCRAFT_PER_COUNTRY
-)
+from src.config import (DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, MAX_AIRCRAFT_PER_COUNTRY, MIN_COUNTRIES,
+                        REQUEST_DELAY)
 from src.logger_manager import log_manager
 
 logger = log_manager.get_logger("db_filler")
@@ -14,13 +14,7 @@ logger = log_manager.get_logger("db_filler")
 def get_connection(dbname: str = DB_NAME):
     """Создает соединение с БД"""
     try:
-        conn = psycopg2.connect(
-            dbname=dbname,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host=DB_HOST,
-            port=DB_PORT
-        )
+        conn = psycopg2.connect(dbname=dbname, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT)
         logger.debug(f"Подключение к БД {dbname} установлено")
         return conn
     except Exception as e:
@@ -126,10 +120,13 @@ def add_country(country_name: str) -> None:
         conn = get_connection()
         cur = conn.cursor()
 
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO countries (name) VALUES (%s)
             ON CONFLICT (name) DO NOTHING
-        """, (country_name,))
+        """,
+            (country_name,),
+        )
 
         conn.commit()
         conn.close()
@@ -146,14 +143,17 @@ def save_aircraft(icao24: str, callsign: str, origin_country: str) -> int:
         conn = get_connection()
         cur = conn.cursor()
 
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO aircraft (icao24, callsign, origin_country)
             VALUES (%s, %s, %s)
             ON CONFLICT (icao24) DO UPDATE SET
                 callsign = EXCLUDED.callsign,
                 origin_country = EXCLUDED.origin_country
             RETURNING id
-        """, (icao24, callsign, origin_country))
+        """,
+            (icao24, callsign, origin_country),
+        )
 
         aircraft_id = cur.fetchone()[0]
         conn.commit()
@@ -167,18 +167,22 @@ def save_aircraft(icao24: str, callsign: str, origin_country: str) -> int:
         raise
 
 
-def save_track(aircraft_id: int, country_id: int, icao24: str,
-               altitude: float, velocity: float, latitude: float, longitude: float) -> None:
+def save_track(
+    aircraft_id: int, country_id: int, icao24: str, altitude: float, velocity: float, latitude: float, longitude: float
+) -> None:
     """Сохраняет трек с защитой от дублей"""
     try:
         conn = get_connection()
         cur = conn.cursor()
 
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO tracks (aircraft_id, country_id, icao24, altitude, velocity, latitude, longitude)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (icao24, country_id, timestamp) DO NOTHING
-        """, (aircraft_id, country_id, icao24, altitude, velocity, latitude, longitude))
+        """,
+            (aircraft_id, country_id, icao24, altitude, velocity, latitude, longitude),
+        )
 
         conn.commit()
         conn.close()
@@ -214,10 +218,13 @@ def get_existing_aircraft_in_country(country_id: int) -> set:
     try:
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("""
-            SELECT DISTINCT icao24 FROM tracks 
+        cur.execute(
+            """
+            SELECT DISTINCT icao24 FROM tracks
             WHERE country_id = %s
-        """, (country_id,))
+        """,
+            (country_id,),
+        )
         result = {row[0] for row in cur.fetchall()}
         conn.close()
 
@@ -356,7 +363,7 @@ def get_countries_from_user() -> list:
     while True:
         country = input(f"Страна {len(countries) + 1}: ").strip()
 
-        if not country or country.lower() == 'stop':
+        if not country or country.lower() == "stop":
             if len(countries) < MIN_COUNTRIES:
                 print(f"\nНужно минимум {MIN_COUNTRIES} стран. Введено: {len(countries)}")
                 continue
@@ -371,7 +378,7 @@ def get_countries_from_user() -> list:
 
         if len(countries) >= MIN_COUNTRIES:
             more = input(f"\nВведено {len(countries)} стран. Добавить еще? (y/n): ").strip().lower()
-            if more != 'y':
+            if more != "y":
                 break
 
     logger.info(f"Пользователь ввел страны: {', '.join(countries)}")

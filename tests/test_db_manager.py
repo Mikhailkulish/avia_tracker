@@ -1,5 +1,7 @@
-import pytest
 from unittest.mock import Mock
+
+import pytest
+
 from src.db_manager import DBManager
 
 
@@ -123,6 +125,6 @@ class TestDBManager:
 
         result = db.get_statistics_summary()
 
-        assert result['total_countries'] == 10
-        assert result['total_aircraft'] == 50
-        assert result['total_tracks'] == 1000
+        assert result["total_countries"] == 10
+        assert result["total_aircraft"] == 50
+        assert result["total_tracks"] == 1000

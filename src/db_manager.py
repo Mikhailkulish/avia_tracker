@@ -1,5 +1,6 @@
 import psycopg2
-from src.config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+
+from src.config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER
 from src.logger_manager import log_manager
 
 logger = log_manager.get_logger("db_manager")
@@ -18,11 +19,7 @@ class DBManager:
         """Устанавливает соединение с БД"""
         try:
             self.connection = psycopg2.connect(
-                dbname=DB_NAME,
-                user=DB_USER,
-                password=DB_PASSWORD,
-                host=DB_HOST,
-                port=DB_PORT
+                dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT
             )
             self.connection.autocommit = True
             logger.info(f"Подключение к БД {DB_NAME} установлено")
@@ -40,7 +37,7 @@ class DBManager:
     def get_countries_and_aeroplanes_count(self) -> list:
         """Получает список всех стран и количество самолетов."""
         query = """
-            SELECT 
+            SELECT
                 c.name as country,
                 COUNT(DISTINCT t.icao24) as aircraft_count
             FROM countries c
@@ -65,7 +62,7 @@ class DBManager:
     def get_all_aeroplanes(self) -> list:
         """Получает список всех воздушных судов с их последними данными."""
         query = """
-            SELECT 
+            SELECT
                 a.icao24,
                 a.callsign,
                 a.origin_country,
@@ -93,7 +90,7 @@ class DBManager:
     def get_avg_speed(self) -> float:
         """Получает среднюю скорость по всем самолетам."""
         query = """
-            SELECT 
+            SELECT
                 AVG(velocity) as avg_speed
             FROM tracks
             WHERE velocity IS NOT NULL
@@ -121,7 +118,7 @@ class DBManager:
                     FROM tracks
                     WHERE velocity IS NOT NULL
                 )
-                SELECT 
+                SELECT
                     t.icao24,
                     a.callsign,
                     MAX(t.velocity) as max_speed,
@@ -154,7 +151,7 @@ class DBManager:
             return []
 
         query = """
-            SELECT 
+            SELECT
                 a.icao24,
                 a.callsign,
                 a.origin_country,
@@ -184,7 +181,7 @@ class DBManager:
     def get_aeroplanes_by_country(self, country_name: str) -> list:
         """Получает список самолетов для конкретной страны."""
         query = """
-            SELECT 
+            SELECT
                 t.icao24,
                 a.callsign,
                 t.altitude,
@@ -215,7 +212,7 @@ class DBManager:
     def get_statistics_summary(self) -> dict:
         """Получает сводную статистику по базе данных."""
         query = """
-            SELECT 
+            SELECT
                 (SELECT COUNT(*) FROM countries) as total_countries,
                 (SELECT COUNT(*) FROM aircraft) as total_aircraft,
                 (SELECT COUNT(*) FROM tracks) as total_tracks,
@@ -230,11 +227,11 @@ class DBManager:
             cur.close()
 
             result = {
-                'total_countries': row[0],
-                'total_aircraft': row[1],
-                'total_tracks': row[2],
-                'unique_icao': row[3],
-                'active_countries': row[4]
+                "total_countries": row[0],
+                "total_aircraft": row[1],
+                "total_tracks": row[2],
+                "unique_icao": row[3],
+                "active_countries": row[4],
             }
 
             logger.info(f"Получена сводная статистика: {result}")

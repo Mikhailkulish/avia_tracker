@@ -4,9 +4,9 @@ from pathlib import Path
 # Добавляем src в путь для импорта
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.fill_db import fill_all_countries, get_countries_from_user
-from src.db_manager import DBManager
 from src.config import MAX_AIRCRAFT_PER_COUNTRY
+from src.db_manager import DBManager
+from src.fill_db import fill_all_countries, get_countries_from_user
 from src.logger_manager import log_manager
 
 logger = log_manager.get_logger("main")
@@ -26,7 +26,7 @@ def main():
 
         choice = input("\nВаш выбор (1/2/3): ").strip()
 
-        if choice == '1':
+        if choice == "1":
             print("\n" + "-" * 60)
             print("ЗАПУСК ЗАПОЛНЕНИЯ БАЗЫ ДАННЫХ")
             print("-" * 60)
@@ -48,7 +48,7 @@ def main():
 
                 confirm = input("Продолжить? (y/n): ").strip().lower()
 
-                if confirm != 'y':
+                if confirm != "y":
                     logger.info("Пользователь отменил выполнение")
                     print("Отмена.")
                     continue  # <-- ВОЗВРАТ В ГЛАВНОЕ МЕНЮ
@@ -71,7 +71,7 @@ def main():
             # Пауза перед возвратом в меню
             input("\nНажмите Enter для возврата в главное меню...")
 
-        elif choice == '2':
+        elif choice == "2":
             print("\n" + "-" * 60)
             print("ЗАПУСК МЕНЕДЖЕРА ДАННЫХ")
             print("-" * 60)
@@ -95,28 +95,28 @@ def main():
 
                     choice_db = input("Ваш выбор (1-8): ").strip()
 
-                    if choice_db == '1':
+                    if choice_db == "1":
                         db_manager.print_countries_and_aeroplanes_count()
 
-                    elif choice_db == '2':
+                    elif choice_db == "2":
                         limit = input("Сколько записей показать? (по умолчанию 20): ").strip()
                         limit = int(limit) if limit else 20
                         db_manager.print_all_aeroplanes(limit=limit)
 
-                    elif choice_db == '3':
+                    elif choice_db == "3":
                         db_manager.print_avg_speed()
 
-                    elif choice_db == '4':
+                    elif choice_db == "4":
                         db_manager.print_aeroplanes_with_higher_speed()
 
-                    elif choice_db == '5':
+                    elif choice_db == "5":
                         keyword = input("Введите ключевое слово для поиска (например, ACA): ").strip()
                         if keyword:
                             db_manager.print_aeroplanes_with_keyword(keyword)
                         else:
                             print("Ключевое слово не введено.")
 
-                    elif choice_db == '6':
+                    elif choice_db == "6":
                         country = input("Введите название страны: ").strip()
                         if country:
                             data = db_manager.get_aeroplanes_by_country(country)
@@ -127,7 +127,9 @@ def main():
                                 print("Нет данных")
                             else:
                                 print(
-                                    f"{'ICAO':<10} {'Позывной':<12} {'Высота':<10} {'Скорость':<10} {'Широта':<12} {'Долгота':<12} {'Время':<20}")
+                                    f"{'ICAO':<10} {'Позывной':<12} {'Высота':<10} "
+                                    f"{'Скорость':<10} {'Широта':<12} {'Долгота':<12} {'Время':<20}"
+                                )
                                 print("-" * 90)
                                 for row in data[:20]:
                                     icao, callsign, altitude, velocity, lat, lon, timestamp = row
@@ -138,12 +140,15 @@ def main():
                                     lon_display = f"{lon:.4f}" if lon else "Н/Д"
                                     time_display = timestamp.strftime("%Y-%m-%d %H:%M") if timestamp else "Н/Д"
                                     print(
-                                        f"{icao:<10} {callsign_display:<12} {altitude_display:<10} {velocity_display:<10} {lat_display:<12} {lon_display:<12} {time_display:<20}")
+                                        f"{icao:<10} {callsign_display:<12} {altitude_display:<10} "
+                                        f"{velocity_display:<10} {lat_display:<12} "
+                                        f"{lon_display:<12} {time_display:<20}"
+                                    )
                             print("=" * 60 + "\n")
                         else:
                             print("Название страны не введено.")
 
-                    elif choice_db == '7':
+                    elif choice_db == "7":
                         stats = db_manager.get_statistics_summary()
                         print("\n" + "=" * 60)
                         print("СВОДНАЯ СТАТИСТИКА")
@@ -155,7 +160,7 @@ def main():
                         print(f"  Активных стран: {stats['active_countries']}")
                         print("=" * 60 + "\n")
 
-                    elif choice_db == '8':
+                    elif choice_db == "8":
                         print("\nВыход в главное меню...")
                         break
 
@@ -170,7 +175,7 @@ def main():
                 db_manager.close()
                 logger.info("Менеджер данных завершил работу")
 
-        elif choice == '3':
+        elif choice == "3":
             print("\nВыход из программы. До свидания!")
             break  # <-- ВЫХОД ИЗ БЕСКОНЕЧНОГО ЦИКЛА И ЗАВЕРШЕНИЕ ПРОГРАММЫ
 

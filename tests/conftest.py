@@ -1,8 +1,7 @@
 from unittest.mock import Mock, patch
-import pytest
-import psycopg2
 
-from src.fill_db import get_connection, DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+import psycopg2
+import pytest
 
 
 @pytest.fixture
@@ -67,14 +66,14 @@ def mock_empty_response():
 @pytest.fixture
 def mock_logger():
     """Фикстура для мока логгера"""
-    with patch('src.fill_db.logger') as mock:
+    with patch("src.fill_db.logger") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_psycopg2():
     """Фикстура для мока psycopg2"""
-    with patch('src.fill_db.psycopg2') as mock:
+    with patch("src.fill_db.psycopg2") as mock:
         yield mock
 
 
@@ -111,19 +110,19 @@ def mock_connection_with_cursor(mock_cursor):
 @pytest.fixture
 def mock_get_connection():
     """Фикстура для мока get_connection"""
-    with patch('src.fill_db.get_connection') as mock:
+    with patch("src.fill_db.get_connection") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_logger_db_manager():
     """Фикстура для мока логгера"""
-    with patch('src.db_manager.logger') as mock:
+    with patch("src.db_manager.logger") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_psycopg2_db_manager():
     """Фикстура для мока psycopg2"""
-    with patch('src.db_manager.psycopg2') as mock:
+    with patch("src.db_manager.psycopg2") as mock:
         yield mock
