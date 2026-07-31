@@ -113,3 +113,17 @@ def mock_get_connection():
     """Фикстура для мока get_connection"""
     with patch('src.fill_db.get_connection') as mock:
         yield mock
+
+
+@pytest.fixture
+def mock_logger_db_manager():
+    """Фикстура для мока логгера"""
+    with patch('src.db_manager.logger') as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_psycopg2_db_manager():
+    """Фикстура для мока psycopg2"""
+    with patch('src.db_manager.psycopg2') as mock:
+        yield mock
