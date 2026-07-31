@@ -30,7 +30,7 @@ class APIAdapter(BaseAPIAdapter):
             raise ValueError(error_msg)
 
         headers_nominatim = {
-            "User-Agent": "test-app",
+            "User-Agent": "tests-app",
         }
 
         # Указываем параметры: в каком формате возвращать данные и максимальную длину списка стран в ответе.
