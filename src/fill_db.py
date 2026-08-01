@@ -214,7 +214,7 @@ def get_country_id(country_name: str) -> int:
 
 
 def get_existing_aircraft_in_country(country_id: int) -> set:
-    """Получает список ICAO уже сохраненных в этой стране"""
+    """Получает список ICAO, уже сохраненных в этой стране"""
     try:
         conn = get_connection()
         cur = conn.cursor()
