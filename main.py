@@ -17,7 +17,7 @@ def main():
 
     while True:  # <-- БЕСКОНЕЧНЫЙ ЦИКЛ ДЛЯ ВОЗВРАТА В ГЛАВНОЕ МЕНЮ
         print("\n" + "=" * 60)
-        print("✈️  AVIATION DATA TRACKER")
+        print("️AVIATION DATA TRACKER")
         print("=" * 60)
         print("\nВыберите действие:")
         print("  1. Заполнить базу данных (сбор данных о самолетах)")
@@ -54,16 +54,16 @@ def main():
                     continue  # <-- ВОЗВРАТ В ГЛАВНОЕ МЕНЮ
 
                 fill_all_countries(countries)
-                print("\n✅ Готово!")
+                print("\n Готово!")
                 logger.info("Программа завершена успешно")
 
             except KeyboardInterrupt:
                 logger.warning("Программа прервана пользователем (Ctrl+C)")
-                print("\n⚠️ Прервано пользователем")
+                print("\n️ Прервано пользователем")
 
             except Exception as e:
                 logger.error(f"Неожиданная ошибка: {e}", exc_info=True)
-                print(f"\n❌ Ошибка: {e}")
+                print(f"\n Ошибка: {e}")
 
             finally:
                 logger.info("=" * 60)
@@ -168,9 +168,9 @@ def main():
                         print("Неверный выбор. Пожалуйста, введите число от 1 до 8.")
 
             except KeyboardInterrupt:
-                print("\n⚠️ Прервано пользователем")
+                print("\n️ Прервано пользователем")
             except Exception as e:
-                print(f"❌ Ошибка: {e}")
+                print(f" Ошибка: {e}")
             finally:
                 db_manager.close()
                 logger.info("Менеджер данных завершил работу")
